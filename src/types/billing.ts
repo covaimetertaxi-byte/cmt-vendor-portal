@@ -79,5 +79,3 @@ export const DEFAULT_COMPANY_PROFILE: CompanyProfile = {
   driverName: "",
   footerNote: "",
 };
-
-export const DEFAULT_CMT_LOGO = "";
