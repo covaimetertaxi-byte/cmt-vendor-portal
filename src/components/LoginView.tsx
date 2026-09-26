@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type CSSProperties } from "react";
+import { useState, useRef, type FormEvent, type CSSProperties, type ChangeEvent } from "react";
 import { 
   Eye, 
   EyeOff, 
@@ -21,6 +21,17 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialErrorMessage || null);
+  const pinInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePinChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const numericOnly = e.target.value.replace(/\D/g, "").slice(0, 4);
+    setPin(numericOnly);
+    // Auto-hide mobile virtual keyboard as soon as 4th digit is typed
+    if (numericOnly.length === 4) {
+      e.target.blur();
+      pinInputRef.current?.blur();
+    }
+  };
 
   const handleLogin = async (e?: FormEvent) => {
     if (e) e.preventDefault();
@@ -127,14 +138,15 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                   </div>
                   <div className="relative flex items-center">
                     <input
+                      ref={pinInputRef}
                       type="tel"
                       inputMode="numeric"
                       name="vendor-pin-code"
                       id="vendor-pin-code"
                       pattern="[0-9]*"
-                      maxLength={6}
+                      maxLength={4}
                       value={pin}
-                      onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                      onChange={handlePinChange}
                       placeholder="••••"
                       autoComplete="off"
                       autoCorrect="off"
