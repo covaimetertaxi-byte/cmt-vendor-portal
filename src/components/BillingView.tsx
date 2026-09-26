@@ -36,6 +36,7 @@ import { toPng } from 'html-to-image';
 import { InvoiceData, INITIAL_DATA, VEHICLE_TYPES } from '../types';
 import { parseCopiedRideText, type ParsedBillResult } from '../utils/textParser';
 import type { CompanyProfile } from '../types/billing';
+import { DEFAULT_CMT_LOGO } from '../assets/defaultLogo';
 
 interface BillingViewProps {
   companyProfile?: CompanyProfile;
@@ -94,7 +95,10 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
   // Default is 'paste' (Paste Booking) and 'manual' is secondary
   const [billingTab, setBillingTab] = useState<'paste' | 'manual'>('paste');
   const [showPreview, setShowPreview] = useState(false);
-  const [logoPreview, setLogoPreview] = useState<string | null>(companyProfile?.logoUrl || null);
+  const initialActiveLogo = (companyProfile?.logoUrl && companyProfile.logoUrl.trim().length > 0) 
+    ? companyProfile.logoUrl 
+    : DEFAULT_CMT_LOGO;
+  const [logoPreview, setLogoPreview] = useState<string | null>(initialActiveLogo);
   const [previewScale, setPreviewScale] = useState(1);
   const [invoiceHeight, setInvoiceHeight] = useState(0);
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -105,12 +109,15 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
 
   // Sync company details whenever companyProfile updates from Settings
   useEffect(() => {
-    const newLogo = companyProfile?.logoUrl || null;
+    const activeLogo = (companyProfile?.logoUrl && companyProfile.logoUrl.trim().length > 0)
+      ? companyProfile.logoUrl
+      : DEFAULT_CMT_LOGO;
+
     setData(prev => ({
       ...prev,
       company: {
-        name: companyProfile?.name || '',
-        logo: newLogo,
+        name: companyProfile?.name || prev.company.name || 'COVAI METER TAXI',
+        logo: activeLogo,
         address: companyProfile?.address || '',
         phone: companyProfile?.phone || '',
         email: companyProfile?.email || '',
@@ -118,7 +125,7 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
         customInfo: companyProfile?.gstin ? `GSTIN: ${companyProfile.gstin}` : '',
       }
     }));
-    setLogoPreview(newLogo);
+    setLogoPreview(activeLogo);
   }, [companyProfile]);
 
   useEffect(() => {
@@ -397,8 +404,34 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
 
   // Generates 100% reliable, high-resolution, non-blank Single-Page PDF Blob
   const generatePdfBlob = async (): Promise<Blob> => {
+    // Target pristine unscaled export element first, then active preview element
     const page1El = document.getElementById('receipt-page-export') || document.getElementById('receipt-page-1');
     if (!page1El) throw new Error("Invoice element not found in DOM");
+
+    // Wait for all image elements (specifically logo) to be fully loaded and decoded
+    const images = Array.from(page1El.querySelectorAll('img'));
+    await Promise.all(
+      images.map(async (img) => {
+        try {
+          if (img.complete && img.naturalWidth > 0) {
+            if ('decode' in img) {
+              await img.decode().catch(() => {});
+            }
+            return;
+          }
+          await new Promise((resolve) => {
+            img.onload = () => resolve(null);
+            img.onerror = () => resolve(null);
+            setTimeout(() => resolve(null), 1200);
+          });
+          if ('decode' in img) {
+            await img.decode().catch(() => {});
+          }
+        } catch {
+          // ignore
+        }
+      })
+    );
 
     const pdf = new jsPDF({
       orientation: 'p',
@@ -410,14 +443,14 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
     let imgData: string | null = null;
 
     try {
-      // html2canvas with explicit bounds from root element
+      // html2canvas with explicit bounds from root element - allowTaint MUST BE false to avoid canvas security errors
       const canvas = await html2canvas(page1El, { 
         scale: 2.2, 
         useCORS: true,
         logging: false,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
-        windowWidth: 1000,
+        imageTimeout: 15000,
         scrollX: 0,
         scrollY: 0,
         x: 0,
@@ -601,7 +634,7 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
                     src={logoPreview} 
                     alt={data.company.name || "Company Logo"} 
                     className="h-32 sm:h-36 max-h-40 w-auto max-w-[340px] object-contain object-left block drop-shadow-xs" 
-                    referrerPolicy="no-referrer" 
+                    crossOrigin="anonymous"
                   />
                 </div>
               )}
@@ -2067,6 +2100,22 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
           )}
         </div>
       </main>
+      </div>
+
+      {/* Dedicated Offscreen PDF Export Node - Always rendered at true 100% 210mm x 297mm scale with no CSS transforms */}
+      <div 
+        style={{ 
+          position: 'fixed', 
+          left: '-99999px', 
+          top: 0, 
+          width: '210mm', 
+          minHeight: '297mm',
+          zIndex: -9999,
+          pointerEvents: 'none'
+        }} 
+        aria-hidden="true"
+      >
+        {renderInvoiceTemplate('receipt-page-export')}
       </div>
 
     </div>

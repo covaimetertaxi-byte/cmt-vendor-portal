@@ -80,6 +80,24 @@ export const clearSession = () => {
   localStorage.removeItem(STORAGE_KEYS.SESSION);
 };
 
+// Clear session and release device lock in Firestore so vendor can switch devices if needed
+export const logoutVendor = async (session: VendorSession | null) => {
+  if (session && session.vendorId) {
+    try {
+      const firestoreDb = getFirebaseDb();
+      if (firestoreDb && isFirebaseConfigured()) {
+        const vendorDocRef = doc(firestoreDb, "vendors", session.vendorId);
+        await updateDoc(vendorDocRef, {
+          activeDeviceId: "",
+        });
+      }
+    } catch (e) {
+      console.warn("Could not release activeDeviceId in Firestore:", e);
+    }
+  }
+  clearSession();
+};
+
 export interface LoginResult {
   success: boolean;
   message?: string;
@@ -137,7 +155,16 @@ export const loginVendor = async (
       };
     }
 
-    // Single-device enforcement: Update activeDeviceId to this device in backend
+    // Strict 1-Device per 1-Vendor ID Rule:
+    // If this vendor is already active on another device, REJECT login.
+    if (data.activeDeviceId && data.activeDeviceId !== currentDeviceId) {
+      return { 
+        success: false, 
+        message: `Device Restriction: Vendor ID "${vendorId}" is already active on another device. 1 Vendor ID can only be logged in on 1 device at a time.` 
+      };
+    }
+
+    // Bind this device to this vendor ID in backend
     await updateDoc(vendorDocRef, {
       activeDeviceId: currentDeviceId,
       lastLogin: new Date().toISOString(),
