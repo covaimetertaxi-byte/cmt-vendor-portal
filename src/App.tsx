@@ -28,6 +28,7 @@ import {
   getStoredSession, 
   verifyDailySession, 
   clearSession, 
+  logoutVendor,
   type VendorSession 
 } from "./services/vendorAuth";
 
@@ -212,8 +213,8 @@ export default function App() {
     setAuthError(null);
   };
 
-  const handleLogout = () => {
-    clearSession();
+  const handleLogout = async () => {
+    await logoutVendor(session);
     setSession(null);
   };
 
@@ -503,8 +504,8 @@ export default function App() {
             </div>
 
             {/* Bottom White Section - Sweeps across full width */}
-            <div className="flex-1 bg-white rounded-tl-[48px] sm:rounded-tl-[64px] pt-8 sm:pt-10 pb-20 px-6 sm:px-8 md:px-12 shadow-[0_-12px_30px_rgba(0,0,0,0.03)] w-full">
-              <div className="max-w-xl lg:max-w-2xl mx-auto space-y-7">
+            <div className="flex-1 bg-white rounded-tl-[48px] sm:rounded-tl-[64px] pt-8 sm:pt-10 pb-20 px-4 sm:px-8 md:px-12 shadow-[0_-12px_30px_rgba(0,0,0,0.03)] w-full max-w-full overflow-hidden">
+              <div className="max-w-xl lg:max-w-2xl mx-auto space-y-7 w-full">
                 
                 {/* 1. Mobile Number Input Card */}
                 <div className="space-y-2">
@@ -559,13 +560,13 @@ export default function App() {
                       animate={{ opacity: 1, height: "auto", y: 0 }}
                       exit={{ opacity: 0, height: 0, y: -6 }}
                       transition={{ duration: 0.18 }}
-                      className="bg-amber-50/60 rounded-2xl p-4 shadow-xs text-left space-y-3 border border-amber-200/80"
+                      className="bg-amber-50/60 rounded-2xl p-3 sm:p-4 shadow-xs text-left space-y-3 border border-amber-200/80 w-full max-w-full box-border overflow-hidden"
                     >
                       <div className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                         Ride Schedule Parameters
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full min-w-0">
+                        <div className="w-full min-w-0">
                           <label htmlFor="schedule-date" className="block text-xs font-bold text-slate-800 mb-1.5">
                             Pickup Date
                           </label>
@@ -575,10 +576,10 @@ export default function App() {
                             value={advanceDate}
                             min={new Date().toISOString().split("T")[0]}
                             onChange={(e) => setAdvanceDate(e.target.value)}
-                            className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer"
+                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-300 rounded-xl px-2.5 sm:px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer"
                           />
                         </div>
-                        <div>
+                        <div className="w-full min-w-0">
                           <label htmlFor="schedule-hour" className="block text-xs font-bold text-slate-800 mb-1.5">
                             Pickup Hour (IST)
                           </label>
@@ -586,7 +587,7 @@ export default function App() {
                             id="schedule-hour"
                             value={advanceHour}
                             onChange={(e) => setAdvanceHour(parseInt(e.target.value, 10))}
-                            className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer appearance-auto"
+                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-300 rounded-xl px-2.5 sm:px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer appearance-auto"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i} className="text-slate-900 font-bold py-1">
