@@ -1,0 +1,8 @@
+{
+  "name": "Remix SMS OTP Web App",
+  "description": "A mobile-responsive PWA that generates a timezone-aware (Asia/Kolkata) dynamic OTP from a mobile number and opens the default SMS app with a pre-filled OTP message.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

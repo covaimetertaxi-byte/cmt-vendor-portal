@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-space: srgb;
+}
+
+@layer base {
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Disable scroll/spinner on number inputs */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  @media print {
+    @page {
+      size: auto;
+      margin: 0;
+    }
+
+    html, body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    /* Ensure all parents of the invoice are visible and centered during printing */
+    html, body, #root, #root > div, main, .print-container, .print-container > div {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: static !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
+      visibility: visible !important;
+      overflow: visible !important;
+      background: white !important;
+      box-shadow: none !important;
+    }
+
+    /* Reset any potential spacing on all elements within the print path */
+    #root *, main *, .print-container * {
+      box-sizing: border-box !important;
+    }
+
+    .print-invoice {
+      box-shadow: none !important;
+      border: none !important;
+      margin: 0 auto !important;
+      padding: 6mm !important;
+      width: 210mm !important;
+      min-height: auto !important;
+      background: white !important;
+      display: block !important;
+      page-break-inside: avoid !important;
+      page-break-after: avoid !important;
+      page-break-before: avoid !important;
+    }
+  }
+}

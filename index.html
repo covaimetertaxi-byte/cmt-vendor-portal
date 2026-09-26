@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CMT - Covai Meter Taxi Portal</title>
+    
+    <!-- PWA & Mobile Web Standards -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#fbbf24" />
+    <meta name="application-name" content="CMT" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Apple iOS Safari PWA tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CMT" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Standard & Favicon Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  </head>
+  <body class="bg-[#f8fafc] text-[#0f172a] antialiased selection:bg-amber-400 selection:text-slate-950">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js")
+            .then((registration) => {
+              // Successfully registered service worker
+            })
+            .catch((error) => {
+              console.warn("Service Worker registration notice: ", error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
