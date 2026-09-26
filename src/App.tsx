@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, type ChangeEvent, type ClipboardEvent } from "react";
+import { useState, useEffect, useRef, lazy, Suspense, type ChangeEvent, type ClipboardEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Phone, 
@@ -149,6 +149,7 @@ export function extractTenDigitMobile(raw: string): string {
 export default function App() {
   // Mobile Number State
   const [mobileNumber, setMobileNumber] = useState("");
+  const mobileInputRef = useRef<HTMLInputElement>(null);
   
   // Mode Selection: "instant" | "advance"
   const [activeTab, setActiveTab] = useState<"instant" | "advance">("instant");
@@ -222,6 +223,11 @@ export default function App() {
   const handleMobileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const cleaned = extractTenDigitMobile(e.target.value);
     setMobileNumber(cleaned);
+    // Auto-hide mobile virtual keyboard as soon as 10-digit mobile number is entered
+    if (cleaned.length === 10) {
+      e.target.blur();
+      mobileInputRef.current?.blur();
+    }
   };
 
   const handleMobilePaste = (e: ClipboardEvent<HTMLInputElement>) => {
@@ -229,6 +235,9 @@ export default function App() {
     const pasted = e.clipboardData.getData("text");
     const cleaned = extractTenDigitMobile(pasted);
     setMobileNumber(cleaned);
+    if (cleaned.length === 10) {
+      mobileInputRef.current?.blur();
+    }
   };
 
   const handlePasteClipboard = async () => {
@@ -237,6 +246,9 @@ export default function App() {
       const cleaned = extractTenDigitMobile(text);
       if (cleaned) {
         setMobileNumber(cleaned);
+        if (cleaned.length === 10) {
+          mobileInputRef.current?.blur();
+        }
       }
     } catch {
       // ignore
@@ -517,7 +529,10 @@ export default function App() {
                       +91
                     </span>
                     <input
+                      ref={mobileInputRef}
                       type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
                       value={cleanDigits}
                       onChange={handleMobileChange}
                       onPaste={handleMobilePaste}
