@@ -560,14 +560,15 @@ export default function App() {
                       animate={{ opacity: 1, height: "auto", y: 0 }}
                       exit={{ opacity: 0, height: 0, y: -6 }}
                       transition={{ duration: 0.18 }}
-                      className="bg-amber-50/60 rounded-2xl p-3 sm:p-4 shadow-xs text-left space-y-3 border border-amber-200/80 w-full max-w-full box-border overflow-hidden"
+                      className="bg-gradient-to-br from-amber-50/90 via-amber-50/40 to-white rounded-2xl p-4 sm:p-5 shadow-xs text-left space-y-3.5 border border-amber-200/90 w-full max-w-full box-border overflow-hidden"
                     >
-                      <div className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        Ride Schedule Parameters
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        <CalendarDays className="w-4 h-4 text-amber-600" />
+                        <span>Ride Schedule Parameters</span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full min-w-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 w-full min-w-0">
                         <div className="w-full min-w-0">
-                          <label htmlFor="schedule-date" className="block text-xs font-bold text-slate-800 mb-1.5">
+                          <label htmlFor="schedule-date" className="block text-xs font-bold text-slate-700 mb-1.5 pl-0.5">
                             Pickup Date
                           </label>
                           <input
@@ -576,18 +577,18 @@ export default function App() {
                             value={advanceDate}
                             min={new Date().toISOString().split("T")[0]}
                             onChange={(e) => setAdvanceDate(e.target.value)}
-                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-300 rounded-xl px-2.5 sm:px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer"
+                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-200 hover:border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 rounded-xl px-3.5 py-2.5 h-12 text-base sm:text-sm font-bold text-slate-900 shadow-2xs transition-all cursor-pointer outline-none"
                           />
                         </div>
                         <div className="w-full min-w-0">
-                          <label htmlFor="schedule-hour" className="block text-xs font-bold text-slate-800 mb-1.5">
+                          <label htmlFor="schedule-hour" className="block text-xs font-bold text-slate-700 mb-1.5 pl-0.5">
                             Pickup Hour (IST)
                           </label>
                           <select
                             id="schedule-hour"
                             value={advanceHour}
                             onChange={(e) => setAdvanceHour(parseInt(e.target.value, 10))}
-                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-300 rounded-xl px-2.5 sm:px-3.5 py-2.5 h-11 text-sm font-bold text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 shadow-xs cursor-pointer appearance-auto"
+                            className="w-full max-w-full min-w-0 box-border block bg-white border border-slate-200 hover:border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-400/20 rounded-xl px-3.5 py-2.5 h-12 text-base sm:text-sm font-bold text-slate-900 shadow-2xs transition-all cursor-pointer outline-none appearance-auto"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i} className="text-slate-900 font-bold py-1">

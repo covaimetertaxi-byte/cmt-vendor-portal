@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type CSSProperties } from "react";
 import { 
   Eye, 
   EyeOff, 
@@ -89,7 +89,7 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                 </div>
               )}
 
-              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
+              <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5" autoComplete="off" spellCheck="false">
                 
                 {/* Vendor ID Input */}
                 <div className="space-y-1.5">
@@ -99,17 +99,23 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                   <div className="relative flex items-center">
                     <input
                       type="text"
+                      name="vendor-code-id"
+                      id="vendor-code-id"
                       value={vendorId}
                       onChange={(e) => setVendorId(e.target.value.toUpperCase())}
                       placeholder=""
                       autoCapitalize="characters"
-                      autoComplete="username"
-                      className="w-full bg-slate-50/90 hover:bg-slate-100/70 focus:bg-white border border-slate-200/90 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 rounded-2xl px-4 py-3 sm:py-3.5 text-base md:text-sm font-mono font-bold text-slate-900 outline-none transition-all placeholder:font-sans placeholder:font-normal placeholder:text-slate-400 shadow-2xs"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      className="w-full bg-slate-50/90 hover:bg-slate-100/70 focus:bg-white border border-slate-200/90 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 rounded-2xl px-4 py-3 sm:py-3.5 text-base font-mono font-bold text-slate-900 outline-none transition-all placeholder:font-sans placeholder:font-normal placeholder:text-slate-400 shadow-2xs"
                     />
                   </div>
                 </div>
 
-                {/* PIN Input */}
+                {/* PIN Input - Disables Google Password Manager warnings & popups */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between pl-1">
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -121,15 +127,24 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                   </div>
                   <div className="relative flex items-center">
                     <input
-                      type={showPin ? "text" : "password"}
+                      type="tel"
                       inputMode="numeric"
+                      name="vendor-pin-code"
+                      id="vendor-pin-code"
                       pattern="[0-9]*"
                       maxLength={6}
                       value={pin}
                       onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
                       placeholder="••••"
-                      autoComplete="current-password"
-                      className="w-full bg-slate-50/90 hover:bg-slate-100/70 focus:bg-white border border-slate-200/90 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 rounded-2xl px-4 pr-12 py-3 sm:py-3.5 text-base md:text-sm font-mono font-black tracking-widest text-slate-900 outline-none transition-all placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 shadow-2xs"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      style={{
+                        WebkitTextSecurity: showPin ? "none" : "disc",
+                      } as CSSProperties}
+                      className="w-full bg-slate-50/90 hover:bg-slate-100/70 focus:bg-white border border-slate-200/90 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 rounded-2xl px-4 pr-12 py-3 sm:py-3.5 text-base font-mono font-black tracking-widest text-slate-900 outline-none transition-all placeholder:font-sans placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 shadow-2xs"
                     />
                     <button
                       type="button"
