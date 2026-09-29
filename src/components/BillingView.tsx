@@ -36,6 +36,7 @@ import { toPng } from 'html-to-image';
 import { InvoiceData, INITIAL_DATA, VEHICLE_TYPES } from '../types';
 import { parseCopiedRideText, type ParsedBillResult } from '../utils/textParser';
 import type { CompanyProfile } from '../types/billing';
+import { extractTenDigitMobile } from '../App';
 
 interface BillingViewProps {
   companyProfile?: CompanyProfile;
@@ -1282,8 +1283,19 @@ export function BillingView({ companyProfile, onNavigateToSettings }: BillingVie
                     <div className="relative flex items-center">
                       <input
                         type="tel"
+                        maxLength={30}
                         value={data.passenger.phone}
-                        onChange={(e) => updateField('passenger', 'phone', e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const cleaned = extractTenDigitMobile(val);
+                          updateField('passenger', 'phone', cleaned || val);
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          const pasted = e.clipboardData?.getData("text") || "";
+                          const cleaned = extractTenDigitMobile(pasted);
+                          updateField('passenger', 'phone', cleaned || pasted);
+                        }}
                         placeholder=""
                         className="w-full bg-slate-50/90 hover:bg-slate-100/70 focus:bg-white border border-slate-200/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 rounded-2xl pl-4 pr-10 py-2.5 text-xs font-mono font-bold text-slate-900 outline-none transition-all shadow-2xs"
                       />

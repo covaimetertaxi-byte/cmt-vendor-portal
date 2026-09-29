@@ -110,40 +110,51 @@ function getISTNow(): ISTInfo {
 }
 
 /**
- * Universal Mobile Sanitizer:
- * Handles any input or pasted format:
- * - "+91 6385765142" -> "6385765142"
- * - "+916385765142"  -> "6385765142"
- * - "+91-63857-65142"-> "6385765142"
- * - "06385765142"    -> "6385765142"
- * - "91 6385765142"  -> "6385765142"
- * - "63857 65142"    -> "6385765142"
- * - "6385765142"     -> "6385765142"
+ * Robust Mobile Sanitizer:
+ * Handles any input or pasted format without breaking on mobile keyboards:
+ * - "+91 63857 65142" -> "6385765142"
+ * - "+916385765142"   -> "6385765142"
+ * - "+91-63857-65142" -> "6385765142"
+ * - "06385765142"     -> "6385765142"
+ * - "91 6385765142"   -> "6385765142"
+ * - "63857 65142"     -> "6385765142"
+ * - "6385765142"      -> "6385765142"
  */
 export function extractTenDigitMobile(raw: string): string {
   if (!raw) return "";
-  let trimmed = raw.trim();
 
-  // If user pasted with explicit international prefix
-  if (trimmed.startsWith("+91") || trimmed.startsWith("+ 91")) {
-    trimmed = trimmed.replace(/^\+\s*91[\s-]*/, "");
-  } else if (trimmed.startsWith("+")) {
-    trimmed = trimmed.replace(/^\+/, "");
+  // Remove zero-width characters, non-breaking spaces, and unwanted unicode
+  const text = raw.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ").trim();
+
+  // 1. Check for standard 10-digit mobile number pattern (starts with 6-9, optionally with country code or trunk 0)
+  const fullMobileMatch = text.match(/(?:(?:\+|00)91[\s.-]*)?0?([6-9]\d{4}[\s.-]?\d{5})/i);
+  if (fullMobileMatch && fullMobileMatch[1]) {
+    const extracted = fullMobileMatch[1].replace(/\D/g, "");
+    if (extracted.length === 10) {
+      return extracted;
+    }
   }
 
-  // Remove any non-digits
-  let digits = trimmed.replace(/\D/g, "");
+  // 2. Strip country codes and common prefixes
+  let sanitized = text;
+  if (/^\+?\s*91[\s-]*/.test(sanitized)) {
+    sanitized = sanitized.replace(/^\+?\s*91[\s-]*/, "");
+  } else if (sanitized.startsWith("+")) {
+    sanitized = sanitized.replace(/^\+/, "");
+  }
 
-  // If digits start with 91 and has 12 or more digits
-  if (digits.startsWith("91") && digits.length >= 12) {
+  let digits = sanitized.replace(/\D/g, "");
+
+  // If 12 digits starting with 91 (e.g. 916385765142)
+  if (digits.length >= 12 && digits.startsWith("91")) {
     digits = digits.slice(2);
-  } 
-  // If digits start with leading 0 trunk prefix
-  else if (digits.startsWith("0") && digits.length >= 11) {
+  }
+  // If 11 digits starting with 0 trunk prefix (e.g. 06385765142)
+  else if (digits.length >= 11 && digits.startsWith("0")) {
     digits = digits.slice(1);
   }
 
-  // Return strictly 10 digits
+  // 3. Return maximum 10 digits
   return digits.slice(0, 10);
 }
 
@@ -537,7 +548,7 @@ export default function App() {
                       ref={mobileInputRef}
                       type="tel"
                       inputMode="numeric"
-                      maxLength={10}
+                      maxLength={30}
                       value={cleanDigits}
                       onChange={handleMobileChange}
                       onPaste={handleMobilePaste}
