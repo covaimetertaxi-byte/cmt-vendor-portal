@@ -9,6 +9,7 @@ import {
   loginVendor, 
   type VendorSession 
 } from "../services/vendorAuth";
+import { TermsModal } from "./TermsModal";
 
 interface LoginViewProps {
   onLoginSuccess: (session: VendorSession) => void;
@@ -21,6 +22,10 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialErrorMessage || null);
+  const [agreedToTerms, setAgreedToTerms] = useState<boolean>(() => {
+    return localStorage.getItem("cmt_terms_accepted") === "true";
+  });
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
   const handlePinChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -30,6 +35,23 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
     if (numericOnly.length === 4) {
       e.target.blur();
       pinInputRef.current?.blur();
+    }
+  };
+
+  const executeLogin = async (id: string, passPin: string) => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await loginVendor(id, passPin);
+      if (res.success && res.session) {
+        onLoginSuccess(res.session);
+      } else {
+        setErrorMessage(res.message || "Login failed. Check your Vendor ID & PIN.");
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "An unexpected error occurred during login.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -45,19 +67,24 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
       setErrorMessage("Please enter your 4-digit PIN.");
       return;
     }
+    if (!agreedToTerms) {
+      setErrorMessage("Please review and accept the Terms & Conditions to sign in.");
+      setShowTermsModal(true);
+      return;
+    }
 
-    setIsLoading(true);
-    try {
-      const res = await loginVendor(vendorId, pin);
-      if (res.success && res.session) {
-        onLoginSuccess(res.session);
-      } else {
-        setErrorMessage(res.message || "Login failed. Check your Vendor ID & PIN.");
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || "An unexpected error occurred during login.");
-    } finally {
-      setIsLoading(false);
+    await executeLogin(vendorId, pin);
+  };
+
+  const handleAcceptTermsInModal = () => {
+    setAgreedToTerms(true);
+    localStorage.setItem("cmt_terms_accepted", "true");
+    setShowTermsModal(false);
+    setErrorMessage(null);
+
+    // If credentials are already typed, proceed with signing in directly
+    if (vendorId.trim() && pin.trim().length >= 4) {
+      executeLogin(vendorId, pin);
     }
   };
 
@@ -169,6 +196,37 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                   </div>
                 </div>
 
+                {/* Terms & Conditions Acceptance Checkbox */}
+                <div className="pt-1">
+                  <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200/90 transition-all">
+                    <input
+                      type="checkbox"
+                      id="agree-terms"
+                      checked={agreedToTerms}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAgreedToTerms(checked);
+                        if (checked) {
+                          localStorage.setItem("cmt_terms_accepted", "true");
+                        } else {
+                          localStorage.removeItem("cmt_terms_accepted");
+                        }
+                      }}
+                      className="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer accent-slate-950 shrink-0"
+                    />
+                    <label htmlFor="agree-terms" className="text-xs text-slate-800 leading-snug cursor-pointer select-none">
+                      I have read and agree to the{" "}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="font-black text-slate-950 underline underline-offset-2 hover:text-amber-800 cursor-pointer"
+                      >
+                        Terms & Conditions
+                      </button>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Login Button */}
                 <button
                   type="submit"
@@ -180,12 +238,31 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
                 </button>
               </form>
 
+              {/* View Terms link */}
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(true)}
+                  className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 transition-colors inline-block cursor-pointer underline underline-offset-2"
+                >
+                  Review App Terms & Conditions
+                </button>
+              </div>
+
             </div>
 
           </div>
         </main>
 
       </div>
+
+      {/* Terms & Conditions Modal */}
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAgree={handleAcceptTermsInModal}
+        showAgreeButton={true}
+      />
 
     </div>
   );

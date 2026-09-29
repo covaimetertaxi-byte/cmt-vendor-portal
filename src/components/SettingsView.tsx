@@ -13,6 +13,7 @@ import type { CompanyProfile } from "../types/billing";
 import { DEFAULT_COMPANY_PROFILE } from "../types/billing";
 import { saveStoredCompanyProfile } from "../utils/storage";
 import type { VendorSession } from "../services/vendorAuth";
+import { TermsModal } from "./TermsModal";
 
 interface SettingsViewProps {
   profile: CompanyProfile;
@@ -25,6 +26,7 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
   const [formData, setFormData] = useState<CompanyProfile>(profile);
   const [isSaved, setIsSaved] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Keep formData in sync when profile prop updates
   useEffect(() => {
@@ -350,6 +352,16 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
                   )}
                 </div>
 
+                <div className="pt-1 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors inline-block cursor-pointer underline underline-offset-2 py-1"
+                  >
+                    View Terms & Conditions
+                  </button>
+                </div>
+
                 {onLogout && (
                   <button
                     type="button"
@@ -366,6 +378,13 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
 
         </div>
       </div>
+
+      {/* Terms & Conditions Modal */}
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        showAgreeButton={false}
+      />
 
     </div>
   );
