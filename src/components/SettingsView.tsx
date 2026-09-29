@@ -28,6 +28,7 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
   const [logoError, setLogoError] = useState<string | null>(null);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
 
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdate(true);
@@ -97,16 +98,20 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
     setTimeout(() => setIsSaved(false), 2500);
   };
 
-  // Reset to default
-  const handleReset = () => {
+  // Prompt confirmation to avoid accidental resets
+  const handleResetClick = () => {
+    setShowResetConfirmModal(true);
+  };
+
+  // Confirmed reset to default company details
+  const handleConfirmReset = () => {
     localStorage.removeItem("covai_meter_taxi_company_profile");
     localStorage.removeItem("companyDetails");
     localStorage.removeItem("companyLogo");
     setFormData(DEFAULT_COMPANY_PROFILE);
     saveStoredCompanyProfile(DEFAULT_COMPANY_PROFILE);
     onProfileUpdated(DEFAULT_COMPANY_PROFILE);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+    setShowResetConfirmModal(false);
   };
 
   return (
@@ -119,8 +124,8 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
         <div className="inline-flex items-center p-1.5 bg-black/10 rounded-2xl space-x-2 backdrop-blur-xs shadow-inner/10">
           <button
             type="button"
-            onClick={handleReset}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-900/80 hover:text-slate-950 hover:bg-black/5 transition-all cursor-pointer flex items-center space-x-1.5"
+            onClick={handleResetClick}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-slate-900/80 hover:text-slate-950 hover:bg-black/5 active:scale-95 transition-all cursor-pointer flex items-center space-x-1.5"
             title="Reset to default company details"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -404,6 +409,43 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
 
         </div>
       </div>
+
+      {/* Reset Confirmation Modal to protect against accidental click */}
+      {showResetConfirmModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl border border-slate-200 space-y-5 animate-scaleUp">
+            <div className="text-center space-y-2">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight uppercase">
+                Reset to Defaults?
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
+                Are you sure you want to reset all company details and logo back to defaults? Any changes you saved will be cleared.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirmModal(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-bold transition-all cursor-pointer text-center"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReset}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs font-black transition-all cursor-pointer shadow-sm text-center"
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
