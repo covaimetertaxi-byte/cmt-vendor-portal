@@ -423,7 +423,7 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
                 Reset to Defaults?
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                Are you sure you want to reset all company details and logo back to defaults? Any changes you saved will be cleared.
+                Reset all company details and logo to default?
               </p>
             </div>
 
