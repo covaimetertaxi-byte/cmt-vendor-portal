@@ -440,7 +440,7 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
                 onClick={handleConfirmReset}
                 className="flex-1 py-2.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 active:scale-95 text-white text-xs font-black transition-all cursor-pointer shadow-sm text-center"
               >
-                Yes, Reset
+                Yes, Reset All
               </button>
             </div>
           </div>
