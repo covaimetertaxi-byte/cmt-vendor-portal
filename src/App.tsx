@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { LoginView } from "./components/LoginView";
 import { OfflineIndicator } from "./components/OfflineIndicator";
+import { PWAUpdateModal } from "./components/PWAUpdateModal";
 import type { CompanyProfile } from "./types/billing";
 import { getStoredCompanyProfile } from "./utils/storage";
 import { 
@@ -375,10 +376,14 @@ export default function App() {
   // If not logged in, render the Vendor Login page
   if (!session) {
     return (
-      <LoginView
-        onLoginSuccess={handleLoginSuccess}
-        initialErrorMessage={authError}
-      />
+      <>
+        <LoginView
+          onLoginSuccess={handleLoginSuccess}
+          initialErrorMessage={authError}
+        />
+        <PWAUpdateModal />
+        <OfflineIndicator />
+      </>
     );
   }
 
@@ -742,6 +747,9 @@ export default function App() {
 
       {/* Global PWA Connectivity Indicator */}
       <OfflineIndicator />
+
+      {/* Global PWA In-App Update Prompt */}
+      <PWAUpdateModal />
 
     </div>
   );

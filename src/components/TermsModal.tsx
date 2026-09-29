@@ -75,7 +75,7 @@ export function TermsModal({ isOpen, onClose, onAgree, showAgreeButton = true }:
               TERMS & CONDITIONS
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Covai Meter Taxi / CMT Application
+              Covai Meter Taxi
             </p>
           </div>
           <button

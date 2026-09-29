@@ -13,7 +13,7 @@ import type { CompanyProfile } from "../types/billing";
 import { DEFAULT_COMPANY_PROFILE } from "../types/billing";
 import { saveStoredCompanyProfile } from "../utils/storage";
 import type { VendorSession } from "../services/vendorAuth";
-import { TermsModal } from "./TermsModal";
+import { pwaUpdateService } from "../services/pwaUpdateService";
 
 interface SettingsViewProps {
   profile: CompanyProfile;
@@ -26,7 +26,25 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
   const [formData, setFormData] = useState<CompanyProfile>(profile);
   const [isSaved, setIsSaved] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
-  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatus(null);
+    try {
+      const hasUpdate = await pwaUpdateService.checkForUpdate(true);
+      if (!hasUpdate) {
+        setUpdateStatus("App is on the latest version");
+        setTimeout(() => setUpdateStatus(null), 3500);
+      }
+    } catch {
+      setUpdateStatus("Check failed (offline or network error)");
+      setTimeout(() => setUpdateStatus(null), 3500);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   // Keep formData in sync when profile prop updates
   useEffect(() => {
@@ -352,14 +370,22 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
                   )}
                 </div>
 
-                <div className="pt-1 flex items-center justify-between">
+                {/* App Version & PWA Update Checker */}
+                <div className="pt-2 border-t border-slate-200/60 space-y-2">
                   <button
                     type="button"
-                    onClick={() => setShowTermsModal(true)}
-                    className="text-xs font-bold text-slate-600 hover:text-slate-900 transition-colors inline-block cursor-pointer underline underline-offset-2 py-1"
+                    onClick={handleCheckForUpdates}
+                    disabled={isCheckingUpdate}
+                    className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-800 text-xs font-bold transition-all flex items-center justify-center cursor-pointer shadow-2xs disabled:opacity-60"
                   >
-                    View Terms & Conditions
+                    <span>{isCheckingUpdate ? "Checking for updates..." : "Check for App Updates"}</span>
                   </button>
+
+                  {updateStatus && (
+                    <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold text-center animate-fadeIn">
+                      {updateStatus}
+                    </div>
+                  )}
                 </div>
 
                 {onLogout && (
@@ -378,13 +404,6 @@ export function SettingsView({ profile, onProfileUpdated, vendorSession, onLogou
 
         </div>
       </div>
-
-      {/* Terms & Conditions Modal */}
-      <TermsModal
-        isOpen={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-        showAgreeButton={false}
-      />
 
     </div>
   );
