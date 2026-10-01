@@ -27,7 +27,7 @@ import type { CompanyProfile } from "./types/billing";
 import { getStoredCompanyProfile } from "./utils/storage";
 import { 
   getStoredSession, 
-  verifyVendorSession, 
+  verifyDailySession, 
   clearSession, 
   logoutVendor,
   type VendorSession 
@@ -203,42 +203,23 @@ export default function App() {
   const [session, setSession] = useState<VendorSession | null>(getStoredSession);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Cost-effective backend session check:
-  // Auto-logs out if activeDeviceId is cleared/empty in backend or overwritten by another device.
-  // Throttled to minimum 5 mins with 0 writes to save Firebase quota.
+  // Strictly Daily 1-time check (Exactly 1 read per day):
+  // - If already checked today: 0 reads, 0 writes.
+  // - On new day: 1 read only. If activeDeviceId is empty in backend or overwritten, auto log out.
   useEffect(() => {
     if (!session) return;
     let isMounted = true;
 
-    const performSessionCheck = async (force = false) => {
-      const res = await verifyVendorSession(session, force);
+    verifyDailySession(session).then((res) => {
       if (!isMounted) return;
       if (!res.valid) {
-        setAuthError(res.message || "Your session was ended. Please log in again.");
+        setAuthError(res.message || "Your session was ended from backend. Please log in again.");
         setSession(null);
       }
-    };
-
-    // 1. Initial check on app mount
-    performSessionCheck();
-
-    // 2. Cost-effective gentle interval: check every 10 minutes while app is running (0 writes, only 1 read per 10 mins)
-    const checkTimer = setInterval(() => {
-      performSessionCheck();
-    }, 10 * 60 * 1000);
-
-    // 3. Check when user switches back to this tab/app (only if throttled 5-min window passed)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        performSessionCheck();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    });
 
     return () => {
       isMounted = false;
-      clearInterval(checkTimer);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [session]);
 

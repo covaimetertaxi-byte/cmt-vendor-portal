@@ -208,26 +208,23 @@ export interface VerificationResult {
   message?: string;
 }
 
-// Global in-memory throttle to ensure we NEVER spam Firestore with continuous reads
-// Guaranteed cost-effective: At most 1 read per 5 minutes per device, with ZERO writes
-const MIN_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-let lastVerifiedTimestamp = 0;
-
 /**
- * Cost-Effective Session Verification:
- * 1. Checks if activeDeviceId is empty in Firestore backend -> If empty, immediately AUTO-LOGOUT.
- * 2. Checks if another device logged in (activeDeviceId !== deviceId) -> If changed, AUTO-LOGOUT.
- * 3. Cost-effective protection: Throttled to minimum 5-minute interval between reads, with 0 Firestore writes.
- * 4. Offline resilience: If device is offline, preserves session without logging out.
+ * Daily 1-time backend check (Strictly 1 read per day):
+ * 1. Checks if session has ALREADY been validated today (`currentSession.lastCheckedDate === today`).
+ *    -> If YES: Returns immediately with 0 READ/WRITE calls! Cost = 0.
+ * 2. If new day: Performs exactly 1 read check on Firestore:
+ *    -> If activeDeviceId is EMPTY/cleared in backend: AUTO LOGOUT!
+ *    -> If activeDeviceId does not match this device: AUTO LOGOUT!
+ *    -> If valid: Updates lastCheckedDate = today (0 more reads for the rest of today).
  */
-export const verifyVendorSession = async (
-  currentSession: VendorSession, 
+export const verifyDailySession = async (
+  currentSession: VendorSession,
   forceCheck = false
 ): Promise<VerificationResult> => {
-  const now = Date.now();
+  const today = getTodayDateString();
 
-  // Cost-effective gate: Skip Firestore read if checked recently (within 5 minutes) unless forced
-  if (!forceCheck && now - lastVerifiedTimestamp < MIN_CHECK_INTERVAL_MS) {
+  // If already checked today and not forced, SKIP read/write completely! (0 reads, 0 writes)
+  if (!forceCheck && currentSession.lastCheckedDate === today) {
     return { valid: true };
   }
 
@@ -237,7 +234,6 @@ export const verifyVendorSession = async (
     try {
       const vendorDocRef = doc(firestoreDb, "vendors", currentSession.vendorId);
       const snapshot = await getDoc(vendorDocRef);
-      lastVerifiedTimestamp = Date.now();
 
       if (!snapshot.exists()) {
         clearSession();
@@ -271,15 +267,20 @@ export const verifyVendorSession = async (
         };
       }
 
+      // Mark validated for today (0 more reads for the rest of today)
+      currentSession.lastCheckedDate = today;
+      saveSession(currentSession);
       return { valid: true };
     } catch {
-      // Offline or network glitch: gracefully preserve session
+      // Offline fallback: allow session to continue without logging out
       return { valid: true };
     }
   }
 
+  currentSession.lastCheckedDate = today;
+  saveSession(currentSession);
   return { valid: true };
 };
 
-// Backwards-compatible alias for existing imports
-export const verifyDailySession = verifyVendorSession;
+// Backwards-compatible alias
+export const verifyVendorSession = verifyDailySession;
