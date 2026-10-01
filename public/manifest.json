@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Covai Meter Taxi - Vendor Portal",
-  "short_name": "CMT",
-  "description": "Covai Meter Taxi Vendor Portal for Ride Verification OTPs, Automated Billing, and Trip Receipts.",
+  "name": "CMT VENDOR",
+  "short_name": "CMT VENDOR",
+  "description": "CMT VENDOR Portal for Ride Verification OTPs, Automated Billing, and Trip Receipts.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,4 +1,4 @@
-import { useState, useRef, type FormEvent, type CSSProperties, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent, type CSSProperties, type ChangeEvent } from "react";
 import { 
   Eye, 
   EyeOff, 
@@ -27,6 +27,12 @@ export function LoginView({ onLoginSuccess, initialErrorMessage }: LoginViewProp
   });
   const [showTermsModal, setShowTermsModal] = useState(false);
   const pinInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialErrorMessage) {
+      setErrorMessage(initialErrorMessage);
+    }
+  }, [initialErrorMessage]);
 
   const handlePinChange = (e: ChangeEvent<HTMLInputElement>) => {
     const numericOnly = e.target.value.replace(/\D/g, "").slice(0, 4);

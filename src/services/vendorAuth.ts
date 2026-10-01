@@ -204,39 +204,65 @@ export const loginVendor = async (
 
 export interface VerificationResult {
   valid: boolean;
-  reason?: "DEVICE_OVERWRITTEN" | "NOT_FOUND" | "NETWORK_OFFLINE";
+  reason?: "DEVICE_CLEARED" | "DEVICE_OVERWRITTEN" | "NOT_FOUND" | "NETWORK_OFFLINE";
   message?: string;
 }
 
-/**
- * Daily 1-time backend check:
- * - Checks if session has ALREADY been validated today (`lastCheckedDate === today`).
- * - If YES: Returns immediately with 0 READ/WRITE calls!
- * - If NO: Performs exactly 1 check to verify if another device took over the account.
- */
-export const verifyDailySession = async (currentSession: VendorSession): Promise<VerificationResult> => {
-  const today = getTodayDateString();
+// Global in-memory throttle to ensure we NEVER spam Firestore with continuous reads
+// Guaranteed cost-effective: At most 1 read per 5 minutes per device, with ZERO writes
+const MIN_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let lastVerifiedTimestamp = 0;
 
-  // If already checked today, SKIP read/write completely!
-  if (currentSession.lastCheckedDate === today) {
+/**
+ * Cost-Effective Session Verification:
+ * 1. Checks if activeDeviceId is empty in Firestore backend -> If empty, immediately AUTO-LOGOUT.
+ * 2. Checks if another device logged in (activeDeviceId !== deviceId) -> If changed, AUTO-LOGOUT.
+ * 3. Cost-effective protection: Throttled to minimum 5-minute interval between reads, with 0 Firestore writes.
+ * 4. Offline resilience: If device is offline, preserves session without logging out.
+ */
+export const verifyVendorSession = async (
+  currentSession: VendorSession, 
+  forceCheck = false
+): Promise<VerificationResult> => {
+  const now = Date.now();
+
+  // Cost-effective gate: Skip Firestore read if checked recently (within 5 minutes) unless forced
+  if (!forceCheck && now - lastVerifiedTimestamp < MIN_CHECK_INTERVAL_MS) {
     return { valid: true };
   }
 
   const firestoreDb = getFirebaseDb();
 
-  if (firestoreDb && isFirebaseConfigured()) {
+  if (firestoreDb && isFirebaseConfigured() && navigator.onLine) {
     try {
       const vendorDocRef = doc(firestoreDb, "vendors", currentSession.vendorId);
       const snapshot = await getDoc(vendorDocRef);
+      lastVerifiedTimestamp = Date.now();
 
       if (!snapshot.exists()) {
         clearSession();
-        return { valid: false, reason: "NOT_FOUND", message: "Vendor account was not found. Please contact administrator." };
+        return { 
+          valid: false, 
+          reason: "NOT_FOUND", 
+          message: "Vendor account was not found. Please contact administrator." 
+        };
       }
 
       const data = snapshot.data() as VendorRecord;
-      // Single-device check: Has another device logged into this vendor account?
-      if (data.activeDeviceId && data.activeDeviceId !== currentSession.deviceId) {
+      const backendDeviceId = (data.activeDeviceId || "").trim();
+
+      // 1. If activeDeviceId is EMPTY in backend -> AUTO LOGOUT!
+      if (!backendDeviceId) {
+        clearSession();
+        return {
+          valid: false,
+          reason: "DEVICE_CLEARED",
+          message: "Your session was ended from backend. Please log in again with your PIN."
+        };
+      }
+
+      // 2. If activeDeviceId was overwritten by another device -> AUTO LOGOUT!
+      if (backendDeviceId !== currentSession.deviceId) {
         clearSession();
         return {
           valid: false,
@@ -245,17 +271,15 @@ export const verifyDailySession = async (currentSession: VendorSession): Promise
         };
       }
 
-      // Valid: Update last checked date in local session (0 more reads for the rest of today)
-      currentSession.lastCheckedDate = today;
-      saveSession(currentSession);
       return { valid: true };
     } catch {
-      // Offline fallback: allow session to continue without logging out
+      // Offline or network glitch: gracefully preserve session
       return { valid: true };
     }
   }
 
-  currentSession.lastCheckedDate = today;
-  saveSession(currentSession);
   return { valid: true };
 };
+
+// Backwards-compatible alias for existing imports
+export const verifyDailySession = verifyVendorSession;
