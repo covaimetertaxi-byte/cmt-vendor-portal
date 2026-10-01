@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'Covai Meter Taxi - Vendor Portal',
-          short_name: 'CMT',
-          description: 'Covai Meter Taxi Vendor Portal for Ride Verification OTPs, Automated Billing, and Trip Receipts.',
+          name: 'CMT VENDOR',
+          short_name: 'CMT VENDOR',
+          description: 'CMT VENDOR Portal for Ride Verification OTPs, Automated Billing, and Trip Receipts.',
           theme_color: '#fbbf24',
           background_color: '#020617',
           display: 'standalone',
@@ -54,8 +54,7 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         },
         devOptions: {
-          enabled: true,
-          type: 'module',
+          enabled: false,
         },
       }),
     ],
